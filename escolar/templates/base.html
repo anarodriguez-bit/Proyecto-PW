@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Control Escolar{% endblock %}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+    <style>
+        body { background-color: #f0f4f8; }
+        .navbar-brand { font-weight: 700; letter-spacing: 1px; }
+        .sidebar { min-height: calc(100vh - 56px); background: #1e3a5f; }
+        .sidebar .nav-link { color: #adb5bd; padding: .5rem 1rem; border-radius: 6px; margin: 2px 6px; }
+        .sidebar .nav-link:hover, .sidebar .nav-link.active { background: #2a5298; color: #fff; }
+        .sidebar .nav-section { color: #6c757d; font-size: .7rem; text-transform: uppercase;
+                                letter-spacing: 1px; padding: .8rem 1rem .2rem; }
+        .card { border: none; border-radius: 12px; }
+        .card-header { border-radius: 12px 12px 0 0 !important; }
+        .btn-action { width: 32px; height: 32px; padding: 0; display: inline-flex;
+                      align-items: center; justify-content: center; }
+        .table th { font-size: .82rem; text-transform: uppercase; letter-spacing: .5px; }
+        .badge-calificacion { font-size: .9rem; }
+        @media (max-width: 768px) { .sidebar { min-height: auto; } }
+    </style>
+</head>
+<body>
+
+<!-- NAVBAR -->
+<nav class="navbar navbar-dark bg-primary shadow-sm">
+    <div class="container-fluid">
+        <a class="navbar-brand" href="{% url 'home' %}">
+            <i class="bi bi-mortarboard-fill me-2"></i>Control Escolar
+        </a>
+        <button class="navbar-toggler d-md-none" type="button" data-bs-toggle="collapse" data-bs-target="#sidebar">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+    </div>
+</nav>
+
+<div class="container-fluid">
+    <div class="row">
+
+        <!-- SIDEBAR -->
+        <div class="col-md-2 px-0 sidebar py-3" id="sidebar">
+            <nav class="nav flex-column">
+                <a class="nav-link {% if request.resolver_match.url_name == 'home' %}active{% endif %}"
+                   href="{% url 'home' %}">
+                    <i class="bi bi-house-door me-2"></i>Inicio
+                </a>
+
+                <span class="nav-section mt-2">Catálogos</span>
+                <a class="nav-link {% if 'carrera' in request.resolver_match.url_name %}active{% endif %}"
+                   href="{% url 'carrera_lista' %}">
+                    <i class="bi bi-building me-2"></i>Carreras
+                </a>
+                <a class="nav-link {% if 'aula' in request.resolver_match.url_name %}active{% endif %}"
+                   href="{% url 'aula_lista' %}">
+                    <i class="bi bi-door-open me-2"></i>Aulas
+                </a>
+                <a class="nav-link {% if 'horario' in request.resolver_match.url_name %}active{% endif %}"
+                   href="{% url 'horario_lista' %}">
+                    <i class="bi bi-clock me-2"></i>Horarios
+                </a>
+                <a class="nav-link {% if 'periodo' in request.resolver_match.url_name %}active{% endif %}"
+                   href="{% url 'periodo_lista' %}">
+                    <i class="bi bi-calendar3 me-2"></i>Periodos
+                </a>
+
+                <span class="nav-section mt-2">Personas</span>
+                <a class="nav-link {% if 'profesor' in request.resolver_match.url_name %}active{% endif %}"
+                   href="{% url 'profesor_lista' %}">
+                    <i class="bi bi-person-badge me-2"></i>Profesores
+                </a>
+                <a class="nav-link {% if 'estudiante' in request.resolver_match.url_name %}active{% endif %}"
+                   href="{% url 'estudiante_lista' %}">
+                    <i class="bi bi-people me-2"></i>Estudiantes
+                </a>
+
+                <span class="nav-section mt-2">Académico</span>
+                <a class="nav-link {% if 'materia' in request.resolver_match.url_name %}active{% endif %}"
+                   href="{% url 'materia_lista' %}">
+                    <i class="bi bi-book me-2"></i>Materias
+                </a>
+                <a class="nav-link {% if 'grupo' in request.resolver_match.url_name %}active{% endif %}"
+                   href="{% url 'grupo_lista' %}">
+                    <i class="bi bi-collection me-2"></i>Grupos
+                </a>
+                <a class="nav-link {% if 'calificacion' in request.resolver_match.url_name %}active{% endif %}"
+                   href="{% url 'calificacion_lista' %}">
+                    <i class="bi bi-card-checklist me-2"></i>Calificaciones
+                </a>
+            </nav>
+        </div>
+
+        <!-- MAIN CONTENT -->
+        <div class="col-md-10 py-4 px-4">
+
+            <!-- Mensajes flash -->
+            {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show shadow-sm" role="alert">
+                <i class="bi bi-check-circle me-2"></i>{{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+            {% endfor %}
+
+            {% block content %}{% endblock %}
+        </div>
+
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    // Confirmación JS antes de eliminar
+    document.querySelectorAll('.btn-eliminar').forEach(btn => {
+        btn.addEventListener('click', function(e) {
+            if (!confirm('¿Estás seguro de que deseas eliminar este registro? Esta acción no se puede deshacer.')) {
+                e.preventDefault();
+            }
+        });
+    });
+</script>
+{% block extra_js %}{% endblock %}
+</body>
+</html>

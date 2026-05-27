@@ -1,0 +1,52 @@
+
+{% extends 'base.html' %}
+{% block title %}Aulas – Control Escolar{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="fw-bold mb-0"><i class="bi bi-door-open me-2 text-primary"></i>Aulas</h2>
+    <a href="{% url 'aula_crear' %}" class="btn btn-primary">
+        <i class="bi bi-plus-lg me-1"></i>Nuevo Aula
+    </a>
+</div>
+
+<div class="card shadow-sm">
+    <div class="card-body p-0">
+        {% if aulas %}
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-dark">
+                    <tr>
+                        <th>#</th>
+                        <th>Nombre</th><th>Capacidad</th><th>Ubicación</th>
+                        <th class="text-center">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for obj in aulas %}
+                    <tr>
+                        <td class="text-muted small">{{ obj.id }}</td>
+                            <td>{{ obj.nombre }}</td>
+                            <td>{{ obj.capacidad }}</td>
+                            <td>{{ obj.ubicacion }}</td>
+
+                        <td class="text-center">
+                            <a href="{% url 'aula_editar' obj.id %}" class="btn btn-sm btn-warning me-1"
+                               title="Editar"><i class="bi bi-pencil"></i></a>
+                            <a href="{% url 'aula_eliminar' obj.id %}" class="btn btn-sm btn-danger"
+                               title="Eliminar"><i class="bi bi-trash"></i></a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="text-center py-5 text-muted">
+            <i class="bi bi-inbox fs-1"></i>
+            <p class="mt-2">No hay aulas registradas. <a href="{% url 'aula_crear' %}">Agregar ahora</a>.</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

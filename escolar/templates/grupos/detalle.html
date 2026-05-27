@@ -1,0 +1,105 @@
+{% extends 'base.html' %}
+{% block title %}Detalle Grupo – Control Escolar{% endblock %}
+
+{% block content %}
+<div class="mb-4">
+    <a href="{% url 'grupo_lista' %}" class="text-decoration-none text-muted small">
+        <i class="bi bi-arrow-left me-1"></i>Regresar a Grupos
+    </a>
+    <h2 class="fw-bold mt-1"><i class="bi bi-collection me-2 text-primary"></i>Detalle del Grupo</h2>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-md-6">
+        <div class="card shadow-sm h-100">
+            <div class="card-header bg-primary text-white"><i class="bi bi-info-circle me-2"></i>Información del Grupo</div>
+            <div class="card-body">
+                <table class="table table-sm table-borderless mb-0">
+                    <tr><th>Clave:</th><td><span class="badge bg-primary fs-6">{{ grupo.nombre }}</span></td></tr>
+                    <tr><th>Materia:</th><td>{{ grupo.materia }}</td></tr>
+                    <tr><th>Profesor:</th><td>{{ grupo.profesor }}</td></tr>
+                    <tr><th>Aula:</th><td>{{ grupo.aula }}</td></tr>
+                    <tr><th>Periodo:</th><td>{{ grupo.periodo }}</td></tr>
+                    <tr><th>Horario:</th><td>{{ grupo.horario }}</td></tr>
+                    <tr><th>Alumnos inscritos:</th><td><span class="badge bg-info text-dark">{{ grupo.estudiantes.count }}</span></td></tr>
+                </table>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card shadow-sm h-100">
+            <div class="card-header bg-success text-white"><i class="bi bi-people me-2"></i>Estudiantes Inscritos</div>
+            <div class="card-body p-0">
+                <ul class="list-group list-group-flush">
+                    {% for est in grupo.estudiantes.all %}
+                    <li class="list-group-item d-flex align-items-center">
+                        <i class="bi bi-person-circle me-2 text-muted"></i>
+                        {{ est.matricula }} – {{ est.nombre_completo }}
+                    </li>
+                    {% empty %}
+                    <li class="list-group-item text-muted text-center py-3">Sin estudiantes inscritos</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Calificaciones del grupo -->
+<div class="card shadow-sm">
+    <div class="card-header bg-warning">
+        <div class="d-flex justify-content-between align-items-center">
+            <span><i class="bi bi-card-checklist me-2"></i>Calificaciones del Grupo</span>
+            <a href="{% url 'calificacion_crear' %}" class="btn btn-sm btn-dark">
+                <i class="bi bi-plus-lg me-1"></i>Agregar calificación
+            </a>
+        </div>
+    </div>
+    <div class="card-body p-0">
+        {% if calificaciones %}
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>Estudiante</th>
+                        <th class="text-center">Calificación</th>
+                        <th>Observaciones</th>
+                        <th class="text-center">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for cal in calificaciones %}
+                    <tr>
+                        <td>{{ cal.estudiante.nombre_completo }}</td>
+                        <td class="text-center">
+                            {% if cal.calificacion >= 7 %}
+                            <span class="badge bg-success fs-6">{{ cal.calificacion }}</span>
+                            {% elif cal.calificacion >= 6 %}
+                            <span class="badge bg-warning text-dark fs-6">{{ cal.calificacion }}</span>
+                            {% else %}
+                            <span class="badge bg-danger fs-6">{{ cal.calificacion }}</span>
+                            {% endif %}
+                        </td>
+                        <td class="text-muted small">{{ cal.observaciones|default:"—" }}</td>
+                        <td class="text-center">
+                            <a href="{% url 'calificacion_editar' cal.id %}" class="btn btn-sm btn-warning me-1">
+                                <i class="bi bi-pencil"></i>
+                            </a>
+                            <a href="{% url 'calificacion_eliminar' cal.id %}" class="btn btn-sm btn-danger">
+                                <i class="bi bi-trash"></i>
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="text-center py-4 text-muted">
+            <i class="bi bi-inbox fs-2"></i>
+            <p class="mt-2">No hay calificaciones registradas para este grupo.</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

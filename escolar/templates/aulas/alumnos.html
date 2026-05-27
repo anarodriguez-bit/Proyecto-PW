@@ -1,0 +1,93 @@
+{% extends 'base.html' %}
+{% block title %}Alumnos en Aula – Control Escolar{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <a href="{% url 'aula_lista' %}" class="text-decoration-none text-muted small">
+            <i class="bi bi-arrow-left me-1"></i>Regresar a Aulas
+        </a>
+        <h2 class="fw-bold mt-1">
+            <i class="bi bi-door-open me-2 text-primary"></i>
+            Aula {{ aula.nombre }} — Lista de Alumnos
+        </h2>
+    </div>
+    <a href="{% url 'aula_alumnos_print' aula.id %}{% if periodo_sel %}?periodo={{ periodo_sel.id }}{% endif %}"
+       target="_blank" class="btn btn-success">
+        <i class="bi bi-printer-fill me-2"></i>Imprimir / PDF
+    </a>
+</div>
+
+<!-- Filtro periodo -->
+<div class="card shadow-sm mb-4">
+    <div class="card-body">
+        <form method="get" class="row g-2 align-items-end">
+            <div class="col-md-5">
+                <label class="form-label fw-semibold">Filtrar por periodo</label>
+                <select name="periodo" class="form-select" onchange="this.form.submit()">
+                    <option value="">— Todos los periodos —</option>
+                    {% for p in periodos %}
+                    <option value="{{ p.id }}" {% if periodo_sel.id == p.id %}selected{% endif %}>{{ p.nombre }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Info del aula -->
+<div class="alert alert-info mb-4">
+    <i class="bi bi-info-circle me-2"></i>
+    <strong>{{ aula.nombre }}</strong> — Capacidad: {{ aula.capacidad }} alumnos | Ubicación: {{ aula.ubicacion }}
+</div>
+
+{% if grupos_data %}
+    {% for item in grupos_data %}
+    <div class="card shadow-sm mb-4">
+        <div class="card-header bg-primary text-white">
+            <div class="d-flex justify-content-between align-items-center">
+                <span>
+                    <i class="bi bi-collection me-2"></i>
+                    Grupo <strong>{{ item.grupo.nombre }}</strong> –
+                    {{ item.grupo.materia }} |
+                    Prof. {{ item.grupo.profesor }} |
+                    {{ item.grupo.horario }}
+                </span>
+                <span class="badge bg-light text-dark">{{ item.estudiantes|length }} alumnos</span>
+            </div>
+        </div>
+        <div class="card-body p-0">
+            {% if item.estudiantes %}
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>#</th>
+                        <th>Matrícula</th>
+                        <th>Nombre</th>
+                        <th>Carrera</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for est in item.estudiantes %}
+                    <tr>
+                        <td class="text-muted">{{ forloop.counter }}</td>
+                        <td>{{ est.matricula }}</td>
+                        <td>{{ est.apellidos }}, {{ est.nombre }}</td>
+                        <td>{{ est.carrera }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <p class="text-muted text-center py-3">Sin alumnos inscritos en este grupo.</p>
+            {% endif %}
+        </div>
+    </div>
+    {% endfor %}
+{% else %}
+<div class="text-center py-5 text-muted">
+    <i class="bi bi-inbox fs-1"></i>
+    <p class="mt-2">No hay grupos asignados a esta aula{% if periodo_sel %} en este periodo{% endif %}.</p>
+</div>
+{% endif %}
+{% endblock %}

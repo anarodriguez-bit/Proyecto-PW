@@ -95,7 +95,7 @@
 <!-- Botones flotantes (solo en pantalla) -->
 <div class="acciones">
     <button class="btn-imprimir" onclick="window.print()">🖨️ Imprimir / PDF</button>
-    <button class="btn-cerrar" onclick="window.close()">✕ Cerrar</button>
+    <button class="btn-cerrar" onclick="if(window.opener){window.close()}else{history.back()}">✕ Cerrar</button>
 </div>
 
 <!-- ENCABEZADO -->

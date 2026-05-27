@@ -1,0 +1,118 @@
+{% extends 'base.html' %}
+{% block title %}Reporte de Calificaciones – Control Escolar{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="fw-bold mb-0"><i class="bi bi-file-earmark-bar-graph me-2 text-primary"></i>Reporte de Calificaciones</h2>
+    {% if grupo_sel %}
+    <a href="{% url 'reporte_print' grupo_sel.id %}" target="_blank" class="btn btn-success">
+        <i class="bi bi-printer-fill me-2"></i>Imprimir / PDF
+    </a>
+    {% endif %}
+</div>
+
+<!-- Selector de grupo -->
+<div class="card shadow-sm mb-4">
+    <div class="card-body">
+        <form method="get" class="row g-2 align-items-end">
+            <div class="col-md-8">
+                <label class="form-label fw-semibold">Selecciona un grupo</label>
+                <select name="grupo" class="form-select" onchange="this.form.submit()">
+                    <option value="">— Selecciona un grupo —</option>
+                    {% for g in grupos %}
+                    <option value="{{ g.id }}" {% if grupo_sel.id == g.id %}selected{% endif %}>
+                        Grupo {{ g.nombre }} – {{ g.materia }} | {{ g.profesor }} | {{ g.periodo }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+        </form>
+    </div>
+</div>
+
+{% if grupo_sel %}
+<!-- Info del grupo -->
+<div class="row g-3 mb-3">
+    <div class="col-md-8">
+        <div class="card shadow-sm h-100">
+            <div class="card-body">
+                <table class="table table-sm table-borderless mb-0">
+                    <tr><th class="text-primary" style="width:120px">Materia:</th><td>{{ grupo_sel.materia }}</td></tr>
+                    <tr><th class="text-primary">Grupo:</th><td>{{ grupo_sel.nombre }}</td></tr>
+                    <tr><th class="text-primary">Docente:</th><td>{{ grupo_sel.profesor }}</td></tr>
+                    <tr><th class="text-primary">Periodo:</th><td>{{ grupo_sel.periodo }}</td></tr>
+                    <tr><th class="text-primary">Aula:</th><td>{{ grupo_sel.aula }}</td></tr>
+                    <tr><th class="text-primary">Horario:</th><td>{{ grupo_sel.horario }}</td></tr>
+                </table>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card shadow-sm h-100 text-center py-3">
+            <div class="fs-1 fw-bold text-primary">{{ grupo_sel.estudiantes.count }}</div>
+            <div class="text-muted">Estudiantes inscritos</div>
+            <hr>
+            <div class="fs-3 fw-bold text-success">{{ calificaciones|length }}</div>
+            <div class="text-muted small">Con calificación</div>
+            {% if sin_calificacion %}
+            <div class="fs-5 fw-bold text-warning">{{ sin_calificacion|length }}</div>
+            <div class="text-muted small">Sin calificación</div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Tabla de alumnos -->
+<div class="card shadow-sm">
+    <div class="card-header bg-dark text-white">
+        <i class="bi bi-list-ol me-2"></i>Lista de alumnos y calificaciones
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-dark">
+                    <tr>
+                        <th>#</th>
+                        <th>Matrícula</th>
+                        <th>Nombre del Alumno</th>
+                        <th class="text-center">Calificación</th>
+                        <th class="text-center">Resultado</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for cal in calificaciones %}
+                    <tr>
+                        <td class="text-muted">{{ forloop.counter }}</td>
+                        <td>{{ cal.estudiante.matricula }}</td>
+                        <td>{{ cal.estudiante.apellidos }}, {{ cal.estudiante.nombre }}</td>
+                        <td class="text-center fw-bold fs-5
+                            {% if cal.calificacion >= 7 %}text-success
+                            {% elif cal.calificacion >= 6 %}text-warning
+                            {% else %}text-danger{% endif %}">
+                            {{ cal.calificacion }}
+                        </td>
+                        <td class="text-center">
+                            {% if cal.calificacion >= 6 %}
+                            <span class="badge bg-success">ACREDITADO</span>
+                            {% else %}
+                            <span class="badge bg-danger">NO ACREDITADO</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                    {% for est in sin_calificacion %}
+                    <tr class="table-warning">
+                        <td class="text-muted">{{ calificaciones|length|add:forloop.counter }}</td>
+                        <td>{{ est.matricula }}</td>
+                        <td>{{ est.apellidos }}, {{ est.nombre }}</td>
+                        <td class="text-center text-muted">—</td>
+                        <td class="text-center"><span class="badge bg-secondary">SIN CALIFICACIÓN</span></td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

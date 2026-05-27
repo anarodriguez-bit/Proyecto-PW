@@ -31,6 +31,8 @@
                             <td>{{ obj.ubicacion }}</td>
 
                         <td class="text-center">
+                            <a href="{% url 'aula_alumnos' obj.id %}" class="btn btn-sm btn-info me-1"
+                               title="Lista de alumnos"><i class="bi bi-people"></i></a>
                             <a href="{% url 'aula_editar' obj.id %}" class="btn btn-sm btn-warning me-1"
                                title="Editar"><i class="bi bi-pencil"></i></a>
                             <a href="{% url 'aula_eliminar' obj.id %}" class="btn btn-sm btn-danger"

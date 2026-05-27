@@ -33,6 +33,8 @@ urlpatterns = [
     path('aulas/nueva/', views.aula_gestion, name='aula_crear'),
     path('aulas/editar/<int:pk>/', views.aula_gestion, name='aula_editar'),
     path('aulas/eliminar/<int:pk>/', views.aula_eliminar, name='aula_eliminar'),
+    path('aulas/<int:pk>/alumnos/', views.aula_alumnos, name='aula_alumnos'),
+    path('aulas/<int:pk>/alumnos/print/', views.aula_alumnos_print, name='aula_alumnos_print'),
 
     # Periodos
     path('periodos/', views.periodo_lista, name='periodo_lista'),
@@ -58,5 +60,10 @@ urlpatterns = [
     path('calificaciones/nueva/', views.calificacion_gestion, name='calificacion_crear'),
     path('calificaciones/editar/<int:pk>/', views.calificacion_gestion, name='calificacion_editar'),
     path('calificaciones/eliminar/<int:pk>/', views.calificacion_eliminar, name='calificacion_eliminar'),
+    path('calificaciones/reporte/', views.reporte_calificaciones, name='reporte_calificaciones'),
+    path('calificaciones/reporte/<int:pk>/print/', views.reporte_print, name='reporte_print'),
+
+    # Boleta estudiante
     path('boleta/<int:pk>/', views.boleta_estudiante, name='boleta_estudiante'),
+    path('boleta/<int:pk>/print/', views.boleta_print, name='boleta_print'),
 ]

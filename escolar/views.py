@@ -281,3 +281,138 @@ def boleta_estudiante(request, pk):
         'periodo_sel': periodo_sel,
         'promedio': promedio,
     })
+
+def boleta_print(request, pk):
+    """Vista de impresión — sin base.html, abre en ventana nueva."""
+    estudiante = get_object_or_404(Estudiante, pk=pk)
+    periodo_id = request.GET.get('periodo')
+    periodos = PeriodoSemestral.objects.all()
+    periodo_sel = None
+
+    if periodo_id:
+        periodo_sel = get_object_or_404(PeriodoSemestral, pk=periodo_id)
+        calificaciones = Calificacion.objects.filter(
+            estudiante=estudiante,
+            grupo__periodo=periodo_sel
+        ).select_related('grupo__materia', 'grupo__profesor', 'grupo__periodo')
+    else:
+        calificaciones = Calificacion.objects.filter(
+            estudiante=estudiante
+        ).select_related('grupo__materia', 'grupo__profesor', 'grupo__periodo')
+
+    promedio = None
+    if calificaciones.exists():
+        total = sum(float(c.calificacion) for c in calificaciones)
+        promedio = round(total / calificaciones.count(), 2)
+
+    return render(request, 'calificaciones/boleta_print.html', {
+        'estudiante': estudiante,
+        'calificaciones': calificaciones,
+        'periodos': periodos,
+        'periodo_sel': periodo_sel,
+        'promedio': promedio,
+    })
+
+
+# ─── REPORTE DE CALIFICACIONES POR GRUPO ────────────────────────────────────
+
+def reporte_calificaciones(request):
+    """Reporte tipo lista de alumnos con calificación, por grupo."""
+    grupos = Grupo.objects.select_related('materia', 'profesor', 'periodo').all()
+    grupo_sel = None
+    calificaciones = []
+    sin_calificacion = []
+
+    grupo_id = request.GET.get('grupo')
+    if grupo_id:
+        grupo_sel = get_object_or_404(Grupo, pk=grupo_id)
+        # Estudiantes del grupo
+        estudiantes_grupo = grupo_sel.estudiantes.all().order_by('apellidos', 'nombre')
+        cals_dict = {c.estudiante_id: c for c in
+                     Calificacion.objects.filter(grupo=grupo_sel).select_related('estudiante')}
+        for est in estudiantes_grupo:
+            if est.id in cals_dict:
+                calificaciones.append(cals_dict[est.id])
+            else:
+                sin_calificacion.append(est)
+
+    return render(request, 'calificaciones/reporte.html', {
+        'grupos': grupos,
+        'grupo_sel': grupo_sel,
+        'calificaciones': calificaciones,
+        'sin_calificacion': sin_calificacion,
+    })
+
+
+def reporte_print(request, pk):
+    """Versión imprimible del reporte de calificaciones."""
+    grupo = get_object_or_404(Grupo, pk=pk)
+    estudiantes_grupo = grupo.estudiantes.all().order_by('apellidos', 'nombre')
+    cals_dict = {c.estudiante_id: c for c in
+                 Calificacion.objects.filter(grupo=grupo).select_related('estudiante')}
+    filas = []
+    for est in estudiantes_grupo:
+        filas.append({
+            'estudiante': est,
+            'calificacion': cals_dict.get(est.id, None)
+        })
+    aprobados = sum(1 for f in filas if f['calificacion'] and f['calificacion'].calificacion >= 6)
+    return render(request, 'calificaciones/reporte_print.html', {
+        'grupo': grupo,
+        'filas': filas,
+        'aprobados': aprobados,
+        'reprobados': len(filas) - aprobados,
+    })
+
+
+# ─── LISTA DE ALUMNOS POR AULA ───────────────────────────────────────────────
+
+def aula_alumnos(request, pk):
+    """Muestra los grupos asignados a un aula y sus estudiantes."""
+    aula = get_object_or_404(Aula, pk=pk)
+    periodo_id = request.GET.get('periodo')
+    periodos = PeriodoSemestral.objects.all()
+    periodo_sel = None
+
+    grupos_qs = Grupo.objects.filter(aula=aula).select_related('materia', 'profesor', 'periodo', 'horario')
+    if periodo_id:
+        periodo_sel = get_object_or_404(PeriodoSemestral, pk=periodo_id)
+        grupos_qs = grupos_qs.filter(periodo=periodo_sel)
+
+    grupos_data = []
+    for g in grupos_qs:
+        grupos_data.append({
+            'grupo': g,
+            'estudiantes': g.estudiantes.all().order_by('apellidos', 'nombre'),
+        })
+
+    return render(request, 'aulas/alumnos.html', {
+        'aula': aula,
+        'grupos_data': grupos_data,
+        'periodos': periodos,
+        'periodo_sel': periodo_sel,
+    })
+
+
+def aula_alumnos_print(request, pk):
+    """Versión imprimible de lista de alumnos por aula."""
+    aula = get_object_or_404(Aula, pk=pk)
+    periodo_id = request.GET.get('periodo')
+    periodo_sel = None
+    grupos_qs = Grupo.objects.filter(aula=aula).select_related('materia', 'profesor', 'periodo', 'horario')
+    if periodo_id:
+        periodo_sel = get_object_or_404(PeriodoSemestral, pk=periodo_id)
+        grupos_qs = grupos_qs.filter(periodo=periodo_sel)
+
+    grupos_data = []
+    for g in grupos_qs:
+        grupos_data.append({
+            'grupo': g,
+            'estudiantes': g.estudiantes.all().order_by('apellidos', 'nombre'),
+        })
+
+    return render(request, 'aulas/alumnos_print.html', {
+        'aula': aula,
+        'grupos_data': grupos_data,
+        'periodo_sel': periodo_sel,
+    })

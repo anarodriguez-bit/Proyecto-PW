@@ -60,6 +60,7 @@ urlpatterns = [
     path('calificaciones/nueva/', views.calificacion_gestion, name='calificacion_crear'),
     path('calificaciones/editar/<int:pk>/', views.calificacion_gestion, name='calificacion_editar'),
     path('calificaciones/eliminar/<int:pk>/', views.calificacion_eliminar, name='calificacion_eliminar'),
+    path('calificaciones/captura/', views.captura_calificaciones, name='captura_calificaciones'),
     path('calificaciones/reporte/', views.reporte_calificaciones, name='reporte_calificaciones'),
     path('calificaciones/reporte/<int:pk>/print/', views.reporte_print, name='reporte_print'),
 

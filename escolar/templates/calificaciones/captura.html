@@ -1,0 +1,232 @@
+{% extends 'base.html' %}
+{% block title %}Captura de Calificaciones – Control Escolar{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="fw-bold mb-0">
+        <i class="bi bi-pencil-square me-2 text-primary"></i>Captura de Calificaciones
+    </h2>
+    {% if grupo_sel and filas %}
+    <button form="form-captura" type="submit" class="btn btn-success">
+        <i class="bi bi-floppy-fill me-2"></i>Guardar todas las calificaciones
+    </button>
+    {% endif %}
+</div>
+
+<!-- Selector de grupo -->
+<div class="card shadow-sm mb-4">
+    <div class="card-body">
+        <form method="get">
+            <label class="form-label fw-semibold">Selecciona el grupo a capturar</label>
+            <div class="row g-2 align-items-end">
+                <div class="col-md-9">
+                    <select name="grupo" class="form-select" onchange="this.form.submit()">
+                        <option value="">— Selecciona un grupo —</option>
+                        {% for g in grupos %}
+                        <option value="{{ g.id }}" {% if grupo_sel.id == g.id %}selected{% endif %}>
+                            Grupo {{ g.nombre }} — {{ g.materia }} | Prof. {{ g.profesor }} | {{ g.periodo }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="bi bi-search me-1"></i>Cargar grupo
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+{% if grupo_sel %}
+
+<!-- Info del grupo -->
+<div class="row g-3 mb-4">
+    <div class="col-md-8">
+        <div class="card shadow-sm h-100 border-start border-primary border-4">
+            <div class="card-body">
+                <div class="row g-2">
+                    <div class="col-6">
+                        <p class="mb-1"><span class="text-muted small">Materia</span><br>
+                            <strong>{{ grupo_sel.materia }}</strong></p>
+                        <p class="mb-1"><span class="text-muted small">Docente</span><br>
+                            <strong>{{ grupo_sel.profesor }}</strong></p>
+                    </div>
+                    <div class="col-6">
+                        <p class="mb-1"><span class="text-muted small">Periodo</span><br>
+                            <strong>{{ grupo_sel.periodo }}</strong></p>
+                        <p class="mb-1"><span class="text-muted small">Aula / Horario</span><br>
+                            <strong>{{ grupo_sel.aula }} — {{ grupo_sel.horario }}</strong></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card shadow-sm h-100 text-center py-3">
+            <div class="fs-1 fw-bold text-primary">{{ filas|length }}</div>
+            <div class="text-muted">Alumnos en el grupo</div>
+            <div class="mt-2">
+                <span class="badge bg-success" id="badge-aprobados">0 aprobados</span>
+                <span class="badge bg-danger ms-1" id="badge-reprobados">0 reprobados</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% if filas %}
+<!-- Tabla de captura -->
+<form method="post" id="form-captura">
+    {% csrf_token %}
+    <input type="hidden" name="grupo_id" value="{{ grupo_sel.id }}">
+
+    <div class="card shadow-sm">
+        <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center">
+            <span><i class="bi bi-table me-2"></i>Lista de alumnos — Grupo {{ grupo_sel.nombre }}</span>
+            <div class="d-flex gap-2 align-items-center">
+                <label class="text-white-50 small mb-0">Llenar todo con:</label>
+                <input type="number" id="fill-all" min="0" max="10" step="0.1"
+                       class="form-control form-control-sm" style="width:80px"
+                       placeholder="Ej: 8">
+                <button type="button" class="btn btn-sm btn-outline-light" onclick="fillAll()">
+                    Aplicar a vacíos
+                </button>
+            </div>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0" id="tabla-captura">
+                    <thead class="table-dark">
+                        <tr>
+                            <th style="width:40px">#</th>
+                            <th style="width:120px">Matrícula</th>
+                            <th>Nombre del Alumno</th>
+                            <th style="width:130px" class="text-center">Calificación <span class="text-warning">(0–10)</span></th>
+                            <th class="text-center" style="width:80px">Estado</th>
+                            <th>Observaciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for fila in filas %}
+                        <tr id="fila-{{ fila.estudiante.id }}">
+                            <td class="text-muted">{{ forloop.counter }}</td>
+                            <td><code>{{ fila.estudiante.matricula }}</code></td>
+                            <td class="fw-semibold">
+                                {{ fila.estudiante.apellidos }}, {{ fila.estudiante.nombre }}
+                            </td>
+                            <td class="text-center">
+                                <input
+                                    type="number"
+                                    name="cal_{{ fila.estudiante.id }}"
+                                    id="cal_{{ fila.estudiante.id }}"
+                                    value="{{ fila.calificacion }}"
+                                    min="0" max="10" step="0.1"
+                                    class="form-control form-control-sm text-center cal-input fw-bold"
+                                    style="width:80px; margin:0 auto;"
+                                    data-id="{{ fila.estudiante.id }}"
+                                    onchange="actualizarEstado(this)"
+                                    oninput="actualizarEstado(this)"
+                                >
+                            </td>
+                            <td class="text-center" id="estado-{{ fila.estudiante.id }}">
+                                {% if fila.calificacion != '' %}
+                                    {% if fila.calificacion >= 6 %}
+                                    <span class="badge bg-success">✓</span>
+                                    {% else %}
+                                    <span class="badge bg-danger">✗</span>
+                                    {% endif %}
+                                {% else %}
+                                <span class="badge bg-secondary">—</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <input type="text"
+                                       name="obs_{{ fila.estudiante.id }}"
+                                       value="{{ fila.observaciones }}"
+                                       class="form-control form-control-sm"
+                                       placeholder="Opcional...">
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <div class="card-footer d-flex justify-content-between align-items-center">
+            <small class="text-muted">
+                <i class="bi bi-info-circle me-1"></i>
+                Deja el campo vacío para quitar la calificación. Calificación mínima para acreditar: <strong>6.0</strong>
+            </small>
+            <button type="submit" class="btn btn-success px-4">
+                <i class="bi bi-floppy-fill me-2"></i>Guardar todas
+            </button>
+        </div>
+    </div>
+</form>
+
+{% else %}
+<div class="alert alert-warning">
+    <i class="bi bi-exclamation-triangle me-2"></i>
+    Este grupo no tiene estudiantes inscritos. 
+    <a href="{% url 'grupo_editar' grupo_sel.id %}">Inscribir alumnos al grupo</a>
+</div>
+{% endif %}
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function actualizarEstado(input) {
+    const id = input.dataset.id;
+    const val = parseFloat(input.value);
+    const estado = document.getElementById('estado-' + id);
+    const fila = document.getElementById('fila-' + id);
+
+    if (input.value === '') {
+        estado.innerHTML = '<span class="badge bg-secondary">—</span>';
+        fila.classList.remove('table-success', 'table-danger');
+    } else if (val >= 6) {
+        estado.innerHTML = '<span class="badge bg-success">✓</span>';
+        fila.classList.remove('table-danger');
+        fila.classList.add('table-success');
+    } else {
+        estado.innerHTML = '<span class="badge bg-danger">✗</span>';
+        fila.classList.remove('table-success');
+        fila.classList.add('table-danger');
+    }
+    contarBadges();
+}
+
+function contarBadges() {
+    const inputs = document.querySelectorAll('.cal-input');
+    let aprobados = 0, reprobados = 0;
+    inputs.forEach(inp => {
+        if (inp.value !== '') {
+            parseFloat(inp.value) >= 6 ? aprobados++ : reprobados++;
+        }
+    });
+    document.getElementById('badge-aprobados').textContent = aprobados + ' aprobados';
+    document.getElementById('badge-reprobados').textContent = reprobados + ' reprobados';
+}
+
+function fillAll() {
+    const val = document.getElementById('fill-all').value;
+    if (!val) return;
+    document.querySelectorAll('.cal-input').forEach(inp => {
+        if (inp.value === '') {
+            inp.value = val;
+            actualizarEstado(inp);
+        }
+    });
+}
+
+// Inicializar colores y badges al cargar
+document.addEventListener('DOMContentLoaded', () => {
+    document.querySelectorAll('.cal-input').forEach(inp => {
+        if (inp.value !== '') actualizarEstado(inp);
+    });
+    contarBadges();
+});
+</script>
+{% endblock %}

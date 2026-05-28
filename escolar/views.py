@@ -416,3 +416,64 @@ def aula_alumnos_print(request, pk):
         'grupos_data': grupos_data,
         'periodo_sel': periodo_sel,
     })
+
+
+# ─── CAPTURA MASIVA DE CALIFICACIONES ────────────────────────────────────────
+
+def captura_calificaciones(request):
+    grupos = Grupo.objects.select_related('materia', 'profesor', 'periodo').all()
+    grupo_sel = None
+    filas = []
+    guardado = False
+
+    grupo_id = request.GET.get('grupo') or request.POST.get('grupo_id')
+
+    if grupo_id:
+        grupo_sel = get_object_or_404(Grupo, pk=grupo_id)
+        estudiantes = grupo_sel.estudiantes.all().order_by('apellidos', 'nombre')
+
+        if request.method == 'POST':
+            errores = []
+            for est in estudiantes:
+                cal_val = request.POST.get(f'cal_{est.id}', '').strip()
+                obs_val = request.POST.get(f'obs_{est.id}', '').strip()
+                if cal_val:
+                    try:
+                        cal_num = float(cal_val.replace(',', '.'))
+                        if not (0 <= cal_num <= 10):
+                            errores.append(f"{est.nombre_completo()}: calificación fuera de rango (0-10).")
+                            continue
+                        Calificacion.objects.update_or_create(
+                            estudiante=est,
+                            grupo=grupo_sel,
+                            defaults={'calificacion': cal_num, 'observaciones': obs_val}
+                        )
+                    except ValueError:
+                        errores.append(f"{est.nombre_completo()}: valor inválido '{cal_val}'.")
+                else:
+                    # Si se borra el valor, eliminar calificación existente
+                    Calificacion.objects.filter(estudiante=est, grupo=grupo_sel).delete()
+
+            if errores:
+                for e in errores:
+                    messages.warning(request, e)
+            else:
+                messages.success(request, f'Calificaciones del grupo {grupo_sel} guardadas correctamente.')
+            guardado = True
+
+        # Armar filas con calificaciones existentes
+        cals_dict = {c.estudiante_id: c for c in
+                     Calificacion.objects.filter(grupo=grupo_sel)}
+        for est in estudiantes:
+            cal = cals_dict.get(est.id)
+            filas.append({
+                'estudiante': est,
+                'calificacion': cal.calificacion if cal else '',
+                'observaciones': cal.observaciones if cal else '',
+            })
+
+    return render(request, 'calificaciones/captura.html', {
+        'grupos': grupos,
+        'grupo_sel': grupo_sel,
+        'filas': filas,
+    })
